@@ -53,7 +53,7 @@ climate_array[,"t_mean",] <- matrix(unlist(country_tmean), nrow=length(countries
 climate_array[,"t_min",] <- matrix(unlist(country_tmin), nrow=length(countries), ncol=12, byrow=TRUE)
 climate_array[,"t_max",] <- matrix(unlist(country_tmax), nrow=length(countries), ncol=12, byrow=TRUE)
 
-climate_array
+saveRDS(climate_array, "data/climate_array.RDS")
 
 
 
