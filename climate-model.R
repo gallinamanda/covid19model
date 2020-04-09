@@ -243,7 +243,7 @@ plot_labels <- c("School Closure",
                  "Self Isolation",
                  "Public Events",
                  "First Intervention",
-                 "Lockdown", 'Social distancing')
+                 "Lockdown", 'Social distancing', 'Climate')
 alpha = (as.matrix(out$alpha))
 colnames(alpha) = plot_labels
 g = (mcmc_intervals(alpha, prob = .9))
