@@ -238,7 +238,7 @@ save(fit,prediction,dates,reported_cases,deaths_by_country,countries,estimated.d
 
 # to visualize results
 library(bayesplot)
-filename <- paste0('base-',JOBID)
+filename <- paste0('climate-',JOBID)
 plot_labels <- c("School Closure",
                  "Self Isolation",
                  "Public Events",

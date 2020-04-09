@@ -40,7 +40,7 @@ transformed parameters {
       prediction[1:N0,m] = rep_vector(y[m],N0); // learn the number of cases in the first N0 days
         Rt[,m] = mu[m] * exp(covariate1[,m] * (-alpha[1]) + covariate2[,m] * (-alpha[2]) +
         covariate3[,m] * (-alpha[3])+ covariate4[,m] * (-alpha[4]) + covariate5[,m] * (-alpha[5]) + 
-        covariate6[,m] * (-alpha[6])) + climate[,m] * (-alpha[7]); // + GP[i]); // to_vector(x) * time_effect
+        covariate6[,m] * (-alpha[6]) + climate[,m] * (-alpha[7])); // + GP[i]); // to_vector(x) * time_effect
       for (i in (N0+1):N2) {
         real convolution=0;
         for(j in 1:(i-1)) {
