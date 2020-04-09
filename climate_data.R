@@ -5,6 +5,9 @@
 
 library(raster)
 library(sp)
+library(lubridate)
+
+`%!in%` <- Negate(`%in%`)
 
 countries <- c(
   "Denmark",
@@ -86,7 +89,27 @@ climate_array["United_Kingdom","UV",] <- c(1, 1, 2, 4, 5, 6, 6, 5, 4, 2, 1, 0)
 
 
 
-
-
-
+# this is ***typical climate*** at a point, in the month of the given date
+# the date is collapsed down into the month, years don't mean anything
+worldclim.point <- function(lat, lon, date="2020-01-01", var="tmean", lag=0){
+  if(sum(is.na(c(lat,lon,date,var,lag)) > 0)){
+    warning("NA in one or more of the arguments")
+    return(NA)
+  }
+  if(var %!in% c("tmean", "tmin", "tmax")) error("unknown var")
+  if(var == "tmean") clim_data <- tmean
+  if(var == "tmin") clim_data <- tmin
+  if(var == "tmax") clim_data <- tmax
+  
+  date <- as.Date(date)
+  month_of_date <- month(date - lag)
+  point <- SpatialPoints(data.frame(long = lon, lat = lat))
+  var_value <- extract(clim_data, point) * gain
+  output <- var_value[month_of_date]
+  
+  if(is.na(output)){
+    warning(paste("The point at (", lat, ", ", lon, ") may be over water.", sep=""))
+  }
+  return(output)
+}
 
