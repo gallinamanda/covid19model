@@ -13,7 +13,8 @@ data {
   matrix[N2, M] covariate4;
   matrix[N2, M] covariate5;
   matrix[N2, M] covariate6;
-  matrix[N2, M] climate;
+  matrix[N2, M] temp;
+  matrix[N2, M] humid;
   int EpidemicStart[M];
   real SI[N2]; // fixed pre-calculated SI using emprical data from Neil
 }
@@ -25,7 +26,8 @@ transformed data {
 parameters {
   real<lower=0> mu[M]; // intercept for Rt
   real<lower=0> alpha[6]; // the hier term
-  real climate_coef; // Climate coefficient (added to Rt)
+  real temp_coef; // Climate coefficient (added to Rt)
+  real humid_coef; // Climate coefficient (added to Rt)
   real<lower=0> kappa;
   vector<lower=0>[M] y_raw;
   real<lower=0> phi;
@@ -40,7 +42,7 @@ transformed parameters {
     for (m in 1:M){
       prediction[1:N0,m] = rep_vector(y[m],N0); // learn the number of cases in the first N0 days
       for (nn in 1:N2){
-      	  Rt[nn,m] = (mu[m] + climate[nn,m]*climate_coef) * exp(covariate1[nn,m] * (-alpha[1]) + covariate2[nn,m] * (-alpha[2]) +
+      	  Rt[nn,m] = (mu[m] + temp[nn,m]*temp_coef + humid[nn,m]*humid_coef) * exp(covariate1[nn,m] * (-alpha[1]) + covariate2[nn,m] * (-alpha[2]) +
         covariate3[nn,m] * (-alpha[3])+ covariate4[nn,m] * (-alpha[4]) + covariate5[nn,m] * (-alpha[5]) + 
         covariate6[nn,m] * (-alpha[6])); // + GP[i]); // to_vector(x) * time_effect
 	}		 
@@ -73,7 +75,8 @@ model {
   phi ~ normal(0,5);
   kappa ~ normal(0,0.5);
   mu ~ normal(2.4, kappa); // citation needed
-  climate_coef ~ normal(0, 0.5); // centre climate effect on zero
+  temp_coef ~ normal(0, 0.5); // centre climate effects on zero
+  humid_coef ~ normal(0, 0.5); // centre climate effects on zero
   alpha ~ gamma(.5,1);
   for(m in 1:M){
     deaths[EpidemicStart[m]:N[m], m] ~ neg_binomial_2(E_deaths[EpidemicStart[m]:N[m], m], phi);

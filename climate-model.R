@@ -208,12 +208,15 @@ rstan_options(auto_write = TRUE)
 m = stan_model(paste0('stan-models/',StanModel,'.stan'))
 
 # Adding in climate data
-climate <- t(readRDS("data/climate_array.RDS")[,2,])
-climate <- climate[,countries]
-climate <- (climate - mean(climate)) / (sd(climate)*2)
+.scale <- function(x) return(x - mean(x)) # Keep same scale for ease of interpretation
+climate <- readRDS("data/climate_array.RDS")
+climate <- climate[countries,,]
+temp <- t(.scale(climate[,"t_min",]))
+humid <- t(.scale(climate[,"humidity",]))
 dates <- as.Date(start.date, format="%d/%m/%Y") + seq_len(nrow(stan_data$covariate1))
-climate <- climate[rep(2:4, c(15,31,29)),] # HARD-CODED
-stan_data$climate <- climate
+temp <- temp[rep(2:4, c(15,31,29)),] # HARD-CODED
+humid <- humid[rep(2:4, c(15,31,29)),] # HARD-CODED
+stan_data$temp <- temp; stan_data$humid <- humid
 
 if(DEBUG) {
   fit = sampling(m,data=stan_data,iter=40,warmup=20,chains=2)
@@ -236,6 +239,17 @@ save.image(paste0('results/',StanModel,'-',JOBID,'.Rdata'))
 
 save(fit,prediction,dates,reported_cases,deaths_by_country,countries,estimated.deaths,estimated.deaths.cf,out,covariates,file=paste0('results/',StanModel,'-',JOBID,'-stanfit.Rdata'))
 
+summary(as.numeric(out$temp_coef))
+summary(as.numeric(out$humid_coef))
+
+median(as.numeric(out$humid_coef)) * apply(humid, 2, function(x) diff(range(x)))
+median(as.numeric(out$temp_coef)) * apply(temp, 2, function(x) diff(range(x)))
+
+apply(out$mu, 2, median)
+
+# ... no way this can be true ...
+
+if(FALSE){
 # to visualize results
 library(bayesplot)
 filename <- paste0('climate-',JOBID)
@@ -243,7 +257,7 @@ plot_labels <- c("School Closure",
                  "Self Isolation",
                  "Public Events",
                  "First Intervention",
-                 "Lockdown", 'Social distancing', 'Climate')
+                 "Lockdown", 'Social distancing')
 alpha = (as.matrix(out$alpha))
 colnames(alpha) = plot_labels
 g = (mcmc_intervals(alpha, prob = .9))
@@ -261,3 +275,4 @@ g = (mcmc_intervals(Rt,prob = .9))
 ggsave(sprintf("results/%s-covars-final-rt.pdf",filename),g,width=4,height=6)
 system(paste0("Rscript plot-3-panel.r ", filename,'.Rdata'))
 system(paste0("Rscript plot-forecast.r ",filename,'.Rdata')) ## to run this code you will need to adjust manual values of forecast required
+}
