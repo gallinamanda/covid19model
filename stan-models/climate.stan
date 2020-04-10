@@ -24,7 +24,8 @@ transformed data {
 
 parameters {
   real<lower=0> mu[M]; // intercept for Rt
-  real<lower=0> alpha[7]; // the hier term (extended for climate)
+  real<lower=0> alpha[6]; // the hier term
+  real climate_coef; // Climate coefficient (added to Rt)
   real<lower=0> kappa;
   vector<lower=0>[M] y_raw;
   real<lower=0> phi;
@@ -38,9 +39,11 @@ transformed parameters {
     matrix[N2, M] Rt = rep_matrix(0,N2,M);
     for (m in 1:M){
       prediction[1:N0,m] = rep_vector(y[m],N0); // learn the number of cases in the first N0 days
-        Rt[,m] = mu[m] * exp(covariate1[,m] * (-alpha[1]) + covariate2[,m] * (-alpha[2]) +
-        covariate3[,m] * (-alpha[3])+ covariate4[,m] * (-alpha[4]) + covariate5[,m] * (-alpha[5]) + 
-        covariate6[,m] * (-alpha[6]) + climate[,m] * (-alpha[7])); // + GP[i]); // to_vector(x) * time_effect
+      for (nn in 1:N2){
+      	  Rt[nn,m] = (mu[m] + climate[nn,m]*climate_coef) * exp(covariate1[nn,m] * (-alpha[1]) + covariate2[nn,m] * (-alpha[2]) +
+        covariate3[nn,m] * (-alpha[3])+ covariate4[nn,m] * (-alpha[4]) + covariate5[nn,m] * (-alpha[5]) + 
+        covariate6[nn,m] * (-alpha[6])); // + GP[i]); // to_vector(x) * time_effect
+	}		 
       for (i in (N0+1):N2) {
         real convolution=0;
         for(j in 1:(i-1)) {
@@ -69,7 +72,8 @@ model {
   target += -sum(y_raw); // exponential(1) prior on y_raw implies y ~ exponential(1 / tau)
   phi ~ normal(0,5);
   kappa ~ normal(0,0.5);
-  mu ~ normal(2.4, kappa); // citation needed 
+  mu ~ normal(2.4, kappa); // citation needed
+  climate_coef ~ normal(0, 0.5); // centre climate effect on zero
   alpha ~ gamma(.5,1);
   for(m in 1:M){
     deaths[EpidemicStart[m]:N[m], m] ~ neg_binomial_2(E_deaths[EpidemicStart[m]:N[m], m], phi);
