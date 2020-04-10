@@ -113,3 +113,4 @@ worldclim.point <- function(lat, lon, date="2020-01-01", var="tmean", lag=0){
   return(output)
 }
 
+saveRDS(climate_array, "data/climate_array.RDS")
